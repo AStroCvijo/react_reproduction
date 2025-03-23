@@ -4,14 +4,18 @@ import json
 import time
 import random
 from openai import OpenAI
-import wikienv, wrappers
+from wikienv import WikiEnv
+from wrappers.history_wrapper import HistoryWrapper
+from wrappers.hotpotqa_wrapper import HotPotQAWrapper
+from wrappers.logging_wrapper import LoggingWrapper
+from wrappers.fever_wrapper import FeverWrapper
 
 # -------------------------------------------------------------------------
 # OpenAI LLM
 # -------------------------------------------------------------------------
 
-# OpenAI API key
-client = OpenAI(api_key="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")
+api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=api_key)
 
 # Function for generating an llm answer
 def llm(prompt, stop=["\n"]):
@@ -26,10 +30,13 @@ def llm(prompt, stop=["\n"]):
     stop=stop)
     return response.choices[0].message.content
 
+# -------------------------------------------------------------------------
 # Wrappers
-wiki_env = wikienv.WikiEnv()                                # Wikipedia search class
-fever_env = wrappers.FeverWrapper(wiki_env, split='dev')    # Pass the Wikipedia env to Fever wrapper
-env = wrappers.LoggingWrapper(fever_env)                    # Pass it to the Loggin wrapper
+# -------------------------------------------------------------------------
+
+wiki_env = WikiEnv()                               # Wikipedia search class
+fever_env = FeverWrapper(wiki_env, split='dev')    # Pass the Wikipedia env to Fever wrapper
+env = LoggingWrapper(fever_env)                    # Pass it to the Logging wrapper
 
 # Function for making the next ReAct step
 def step(env, action):
@@ -56,11 +63,11 @@ prompt = prompt_dict['webthink_simple3']
 # -------------------------------------------------------------------------
 
 # Function for executing ReAct-style reasoning for fact verification using Wikipedia environment.
-def webthink(idx=None, prompt=prompt, to_print=True):
+def webthink(index=None, prompt=prompt, to_print=True):
     """Execute ReAct-style reasoning for fact verification using Wikipedia environment.
     
     Args:
-        idx: Index of the question in the dataset
+        index: Index of the question in the dataset
         prompt: Initial prompt template with instructions
         to_print: Whether to print intermediate steps
     
@@ -69,9 +76,9 @@ def webthink(idx=None, prompt=prompt, to_print=True):
         info: Dictionary containing additional information
     """
     # Initialize environment with specific question index
-    question = env.reset(idx=idx)
+    question = env.reset(index=index)
     if to_print:
-        print(idx, question)
+        print(index, question)
     
     # Build initial prompt with current question
     prompt += question + '\n'
@@ -135,16 +142,16 @@ def webthink(idx=None, prompt=prompt, to_print=True):
 # -------------------------------------------------------------------------
 
 # Random shuffle - With seed for reproducability
-idxs = list(range(7405))
-random.Random(233).shuffle(idxs)
+indexes = list(range(7405))
+random.Random(233).shuffle(indexes)
 
 # Loop over firts 500 questions
-rs = []
+answers = []
 infos = []
 old_time = time.time()
-for i in idxs[:500]:
-    r, info = webthink(idx=i, prompt=prompt, to_print=True)
-    rs.append(info['em'])
+for i in indexes[:500]:
+    _, info = webthink(index=i, prompt=prompt, to_print=True)
+    answers.append(info['em'])
     infos.append(info)
-    print(f'Correct answers: {sum(rs)}, Total questions: {len(rs)}, Accuracy: {sum(rs) / len(rs)}, Time: {(time.time() - old_time) / len(rs)}')
+    print(f'Correct answers: {sum(answers)}, Total questions: {len(answers)}, Accuracy: {(sum(answers) / len(answers))*100}%, Time: {(time.time() - old_time) / len(answers)}')
     print('-------------------------------------------------------------------------------------------------\n')
