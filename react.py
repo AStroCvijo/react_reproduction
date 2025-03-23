@@ -1,27 +1,11 @@
-import os
-import sys
-import json
-import time
-import random
-from openai import OpenAI
-from wikienv import WikiEnv
-from wrappers.history_wrapper import HistoryWrapper
-from wrappers.hotpotqa_wrapper import HotPotQAWrapper
-from wrappers.logging_wrapper import LoggingWrapper
-from wrappers.fever_wrapper import FeverWrapper
-
 # -------------------------------------------------------------------------
 # OpenAI LLM
 # -------------------------------------------------------------------------
 
-api_key = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=api_key)
-
-# Function for generating an llm answer
-def llm(prompt, stop=["\n"]):
+def llm(prompt, stop=["\n"], client=None):
     response = client.chat.completions.create(model="gpt-4o-mini",
     messages=[{"role": "system", "content": "You are an assistant that generates helpful answers."},
-              {"role": "user", "content": prompt}],
+            {"role": "user", "content": prompt}],
     temperature=0,
     max_tokens=100,
     top_p=1,
@@ -31,39 +15,10 @@ def llm(prompt, stop=["\n"]):
     return response.choices[0].message.content
 
 # -------------------------------------------------------------------------
-# Wrappers
+# ReAct-style reasoning for fact verification using Wikipedia environment
 # -------------------------------------------------------------------------
 
-wiki_env = WikiEnv()                               # Wikipedia search class
-fever_env = FeverWrapper(wiki_env, split='dev')    # Pass the Wikipedia env to Fever wrapper
-env = LoggingWrapper(fever_env)                    # Pass it to the Logging wrapper
-
-# Function for making the next ReAct step
-def step(env, action):
-    attempts = 0
-    while attempts < 10:
-        try:
-            return env.step(action)
-        except requests.exceptions.Timeout:
-            attempts += 1
-
-# -------------------------------------------------------------------------
-# Prompt
-# -------------------------------------------------------------------------
-
-# Path to fever prompt template
-prompt_file = './prompts/fever.json'
-with open(prompt_file, 'r') as f:
-    prompt_dict = json.load(f)
-
-prompt = prompt_dict['webthink_simple3']
-
-# -------------------------------------------------------------------------
-# ReAct
-# -------------------------------------------------------------------------
-
-# Function for executing ReAct-style reasoning for fact verification using Wikipedia environment.
-def webthink(index=None, prompt=prompt, to_print=True):
+def webthink(index=None, prompt='', to_print=True, env = None, client=None):
     """Execute ReAct-style reasoning for fact verification using Wikipedia environment.
     
     Args:
@@ -90,7 +45,7 @@ def webthink(index=None, prompt=prompt, to_print=True):
     for i in range(1, 20):
         n_calls += 1
         # Generate thought and action using LLM
-        thought_action = llm(prompt + f"Thought {i}:", stop=[f"\nObservation {i}:"])
+        thought_action = llm(prompt + f"Thought {i}:", stop=[f"\nObservation {i}:"], client=client)
         
         try:
             # Attempt to split thought and action components
@@ -104,7 +59,7 @@ def webthink(index=None, prompt=prompt, to_print=True):
             # Get first line as thought
             thought = thought_action.strip().split('\n')[0]
             # Generate action separately if parsing failed
-            action = llm(prompt + f"Thought {i}: {thought}\nAction {i}:", stop=[f"\n"]).strip()
+            action = llm(prompt + f"Thought {i}: {thought}\nAction {i}:", stop=[f"\n"], client=client).strip()
         
         # Execute action in environment
         obs, r, done, info = step(env, action[0].lower() + action[1:])
@@ -137,21 +92,11 @@ def webthink(index=None, prompt=prompt, to_print=True):
     
     return r, info
 
-# -------------------------------------------------------------------------
-# RUN
-# -------------------------------------------------------------------------
-
-# Random shuffle - With seed for reproducability
-indexes = list(range(7405))
-random.Random(233).shuffle(indexes)
-
-# Loop over firts 500 questions
-answers = []
-infos = []
-old_time = time.time()
-for i in indexes[:500]:
-    _, info = webthink(index=i, prompt=prompt, to_print=True)
-    answers.append(info['em'])
-    infos.append(info)
-    print(f'Correct answers: {sum(answers)}, Total questions: {len(answers)}, Accuracy: {(sum(answers) / len(answers))*100}%, Time: {(time.time() - old_time) / len(answers)}')
-    print('-------------------------------------------------------------------------------------------------\n')
+# Function for making the next ReAct step
+def step(env, action):
+    attempts = 0
+    while attempts < 10:
+        try:
+            return env.step(action)
+        except requests.exceptions.Timeout:
+            attempts += 1
