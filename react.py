@@ -141,3 +141,57 @@ def alfworld_run(prompt, to_print=True, ob='', client=None, env=None):
         if done:
             return reward
     return 0
+
+# -------------------------------------------------------------------------
+# ReAct-style reasoning for ALFWorld
+# -------------------------------------------------------------------------
+
+def webshop_run(idx, prompt, to_print=True, env=None):
+  action = 'reset'
+  init_prompt = prompt
+  prompt = ''
+  for i in range(15):
+    try:
+      res = env.step(idx, action)
+      observation = res[0]
+    except AssertionError:
+      observation = 'Invalid action!'
+
+    if action.startswith('think'):
+      observation = 'OK.'
+
+
+    if to_print:
+      print(f'Action: {action}\nObservation: {observation}\n')
+      sys.stdout.flush()
+    if i:
+      prompt += f' {action}\nObservation: {observation}\n\nAction:'
+    else:
+      prompt += f'{observation}\n\nAction:'
+    
+    if res[2]:  
+      return res[1]
+
+    action = llm(init_prompt + prompt[-(6400-len(init_prompt)):], stop=['\n']).lstrip(' ')
+
+  return 0
+
+def run_episodes(prompt, n=50, env=None):
+  rs = []
+  cnt = 0
+  for i in range(n):
+    print('-----------------')
+    print(i)
+    try:
+      r = webshop_run(f'fixed_{i}', prompt, to_print=True, env=env)
+    except AssertionError:
+      r = 0
+      cnt += 1
+    rs.append(r)
+    if (i+1) % 1 == 0:
+      r, sr, fr = sum(rs) / len(rs), len([_ for _ in rs if _ == 1]) / len(rs), cnt / len(rs)
+      print(i+1, r, sr, fr)
+      print('-------------')
+  r, sr, fr = sum(rs) / len(rs), len([_ for _ in rs if _ == 1]) / n, cnt / n
+  print(r, sr, fr)
+  return rs

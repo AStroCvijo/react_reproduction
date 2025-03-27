@@ -9,7 +9,9 @@ import numpy as np
 from react import llm
 from openai import OpenAI
 from wikienv import WikiEnv
+from react import run_episodes
 from utils.argparser import arg_parse
+from wrappers.webshop_wrapper import webshopEnv
 from wrappers.fever_wrapper import FeverWrapper
 from wrappers.logging_wrapper import LoggingWrapper
 from evaluate.evaluate import eval_qa, eval_alfworld
@@ -63,7 +65,6 @@ if __name__ == "__main__":
         (3) Finish[answer], which returns the answer and finishes the task.
         Here are some examples.
         """
-
         prompt = instruction + prompt
 
         # Random shuffle - With seed for reproducability
@@ -94,5 +95,13 @@ if __name__ == "__main__":
         eval_alfworld(env=env, prompt_examples=prompt_examples, client=client)
         
     elif args.data_set == 'WebShop':
-        # Logic for WebShop evaluation
-        pass
+        # Load the prompt
+        prompt_file = './prompts/webshop.json'
+        with open(prompt_file, 'r') as file:
+            prompt = json.load(file)['prompt1']
+
+        env = webshopEnv()
+        results = run_episodes(prompt, 500, env=env)
+        print(results)
+
+        

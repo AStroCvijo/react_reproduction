@@ -23,3 +23,12 @@ prefixes = {
     'look_at_obj': 'examine',
     'pick_two_obj': 'puttwo'
 }
+
+# WebShop constants
+WEBSHOP_URL = "http://3.83.245.205:3000"
+ACTION_TO_TEMPLATE = {
+    'Description': 'description_page.html',
+    'Features': 'features_page.html',
+    'Reviews': 'review_page.html',
+    'Attributes': 'attributes_page.html',
+}
