@@ -12,11 +12,12 @@ from wrappers.fever_wrapper import FeverWrapper
 from wrappers.history_wrapper import HistoryWrapper
 from wrappers.logging_wrapper import LoggingWrapper
 from wrappers.hotpotqa_wrapper import HotPotQAWrapper
-from alfworld.agents.environment import get_environment
-import alfworld.agents.modules.generic as generic
-import alfworld.agents.environment as env_mod
 import yaml
 from react import llm
+
+import numpy as np
+from alfworld.agents.environment import get_environment
+import alfworld.agents.modules.generic as generic
 
 if __name__ == "__main__":
     os.environ["ALFWORLD_DATA"] = "/home/cvijo/.cache/alfworld"
@@ -77,10 +78,10 @@ if __name__ == "__main__":
     elif args.data_set == 'ALFWorld':
         with open('base_config.yaml') as reader:
             config = yaml.safe_load(reader)
-            
+        
         split = "eval_out_of_distribution"
 
-        env = env_mod.get_environment(config["env"]["type"])(config, train_eval=split)
+        env = get_environment(config["env"]["type"])(config, train_eval=split)
         env = env.init_env(batch_size=1)
 
         def process_ob(ob):
@@ -93,7 +94,6 @@ if __name__ == "__main__":
         with open(folder + prompt_file, 'r') as f:
             d = json.load(f)
 
-
         def alfworld_run(prompt, to_print=True, ob=''):
             init_prompt = prompt + ob + '\n>'
             prompt = ''
@@ -102,8 +102,15 @@ if __name__ == "__main__":
                 sys.stdout.flush()
             for i in range(1, 50):
                 action = llm(init_prompt + prompt, stop=['\n'], client=client).strip()
+                if action.startswith('put'):
+                    action = action.replace('put', 'move', 1)  # Replace "put" with "move"
+                    # Replace common prepositions ("in", "on", "in/on") with "to"
+                    for prep in [' in/on ', ' in ', ' on ']:
+                        if prep in action:
+                            action = action.replace(prep, ' to ', 1)
                 observation, reward, done, info = env.step([action])
                 observation, reward, done = process_ob(observation[0]), info['won'][0], done[0]
+                print(f"Infos: {info}\n")
                 if action.startswith('think:'):
                     observation = 'OK.'
                 if to_print:
@@ -113,7 +120,11 @@ if __name__ == "__main__":
                 if done:
                     return reward
             return 0
+        
 
+        # =============================================
+        # Task Type Configuration
+        # =============================================
         prefixes = {
             'pick_and_place': 'put',
             'pick_clean_then_place': 'clean',
@@ -122,30 +133,45 @@ if __name__ == "__main__":
             'look_at_obj': 'examine',
             'pick_two_obj': 'puttwo'
         }
+        
+        # Success counters: rs[task_type] = successes, cnts[task_type] = attempts
         cnts = [0] * 6
         rs = [0] * 6
 
-        for _ in range(134):
+        # =============================================
+        # Main Evaluation Loop (134 OOD tasks)
+        # =============================================
+        for task_num in range(134):
+            # Reset environment for new task
             ob, info = env.reset()
-            ob = '\n'.join(ob[0].split('\n\n')[1:])
+            ob = '\n'.join(ob[0].split('\n\n')[1:])  # Clean observation
+            
+            # Extract task type from path (e.g., 'pick_and_place/living_room')
             name = '/'.join(info['extra.gamefile'][0].split('/')[-3:-1])
+            print(f"\n[Task {task_num+1}/134]")
+            print(f"Task ID: {name}")
             
-            print(f"Game Name: {name}")
-            
+            # Match task to type and select prompt
             for i, (k, v) in enumerate(prefixes.items()):
                 if name.startswith(k):
-                    prompt = (
-                        'Interact with a household to solve a task. Here are two examples.\n'
-                        + d[f'react_{v}_1'] + d[f'react_{v}_0'] + '\nHere is the task.\n'
-                    )
-                    print(f"Prefix: {k}, Value: {v}")
+                    # Construct prompt with 2 few-shot examples
+                    prompt = 'Interact with a household to solve a task. The game will end on its own when you complete the task. Here are two examples.\n' + d[f'react_{v}_1'] + '\nHere is the task.\n'
+                    # Run task with ReAct
                     r = alfworld_run(prompt, ob=ob)
+                    
+                    # Update success counters
                     rs[i] += r
                     cnts[i] += 1
                     break
             
-            print(f"Iteration: {_+1}, Reward: {r}, RS: {rs}, Cnts: {cnts}, Average Reward: {sum(rs) / sum(cnts)}")
-            print('------------\n')
+            # Progress update
+            success_rate = sum(rs) / sum(cnts) if sum(cnts) > 0 else 0
+            print(f"\n[Progress]")
+            print(f"Completed: {task_num+1}/134")
+            print(f"Current Success Rate: {success_rate:.2%}")
+            print(f"Per-Task Counts: {dict(zip(prefixes.keys(), cnts))}")
+            print(f"Per-Task Successes: {dict(zip(prefixes.keys(), rs))}")
+            print('-'*40)
         
     elif args.data_set == 'WebShop':
         # Logic for WebShop evaluation
