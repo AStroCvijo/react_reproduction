@@ -1,3 +1,5 @@
+import sys
+
 # -------------------------------------------------------------------------
 # OpenAI LLM
 # -------------------------------------------------------------------------
@@ -103,3 +105,39 @@ def step(env, action):
             return env.step(action)
         except requests.exceptions.Timeout:
             attempts += 1
+
+# -------------------------------------------------------------------------
+# ReAct-style reasoning for ALFWorld
+# -------------------------------------------------------------------------
+
+def process_ob(ob):
+    if ob.startswith('You arrive at loc '):
+        ob = ob[ob.find('. ')+2:]    
+    return ob
+
+def alfworld_run(prompt, to_print=True, ob='', client=None, env=None):
+    init_prompt = prompt + ob + '\n>'
+    prompt = ''
+    if to_print:
+        print(ob)
+        sys.stdout.flush()
+    for i in range(1, 50):
+        action = llm(init_prompt + prompt, stop=['\n'], client=client).strip()
+        if action.startswith('put'):
+            action = action.replace('put', 'move', 1)  # Replace "put" with "move"
+            # Replace common prepositions ("in", "on", "in/on") with "to"
+            for prep in [' in/on ', ' in ', ' on ']:
+                if prep in action:
+                    action = action.replace(prep, ' to ', 1)
+        observation, reward, done, info = env.step([action])
+        observation, reward, done = process_ob(observation[0]), info['won'][0], done[0]
+        print(f"Infos: {info}\n")
+        if action.startswith('think:'):
+            observation = 'OK.'
+        if to_print:
+            print(f'Act {i}: {action}\nObs {i}: {observation}')
+            sys.stdout.flush()
+        prompt += f' {action}\n{observation}\n>'
+        if done:
+            return reward
+    return 0

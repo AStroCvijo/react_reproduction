@@ -8,7 +8,18 @@ HOTPOTQA_SPLIT_FILE = {
     "test": "data/hotpot_test_v1_simplified.json",
 }
 
+# Fever split file
 FEVER_SPLIT_FILE = {
     "train": "data/train.jsonl",
     "dev": "data/paper_dev.jsonl",
+}
+
+# ALFWorld constants
+prefixes = {
+    'pick_and_place': 'put',
+    'pick_clean_then_place': 'clean',
+    'pick_heat_then_place': 'heat',
+    'pick_cool_then_place': 'cool',
+    'look_at_obj': 'examine',
+    'pick_two_obj': 'puttwo'
 }
