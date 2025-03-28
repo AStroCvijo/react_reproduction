@@ -34,7 +34,7 @@ def eval_qa(indexes = None, prompt = '', to_print=False, env=None, client=None):
 # Evaluation script for ALFWorld dataset
 # -------------------------------------------------------------------------
 
-def eval_alfworld(env=None, prompt_examples='', client=None):
+def eval_alfworld(env=None, prompt_examples='', client=None, prompt_style='react'):
     tasks = [0] * 6
     completed = [0] * 6
 
@@ -53,7 +53,7 @@ def eval_alfworld(env=None, prompt_examples='', client=None):
 
         for i, (k, v) in enumerate(prefixes.items()):
             if name.startswith(k):
-                prompt = 'Interact with a household to solve a task. The game will end on its own when you complete the task. Here are two examples.\n' + prompt_examples[f'react_{v}_1'] + '\nHere is the task.\n'
+                prompt = 'Interact with a household to solve a task. The game will end on its own when you complete the task. Here are two examples.\n' + prompt_examples[f'{prompt_style.lower()}_{v}_1'] + '\nHere is the task.\n'
                 r = alfworld_run(prompt, ob=ob, client=client, env=env)
                 
                 completed[i] += r

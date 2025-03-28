@@ -36,7 +36,7 @@ if __name__ == "__main__":
         # Load the prompt
         prompt_file = './prompts/fever.json'
         with open(prompt_file, 'r') as file:
-            prompt = json.load(file)['webact_simple3']
+            prompt = json.load(file)[args.prompt_style.lower()]
 
         # Random shuffle - With seed for reproducability
         indexes = list(range(7405))
@@ -44,6 +44,7 @@ if __name__ == "__main__":
 
         # Evaluate on the FEVER dataset
         eval_qa(indexes=indexes, prompt=prompt, to_print=True, env=env, client=client)
+
     elif args.data_set == 'HotpotQA':
         # Wrappers
         wiki_env = WikiEnv()
@@ -51,9 +52,9 @@ if __name__ == "__main__":
         env = LoggingWrapper(hotpotqa_env)
 
         # Load the prompt
-        prompt_file='./prompts/prompts_naive.json'
+        prompt_file='./prompts/hotpotqa.json'
         with open(prompt_file, 'r') as file:
-            prompt = json.load(file)['webthink_simple6']
+            prompt = json.load(file)[args.prompt_style.lower()]
         
         instruction = """Solve a question answering task with interleaving Thought, Action, Observation steps. Thought can reason about the current situation, and Action can be three types: 
         (1) Search[entity], which searches the exact entity on Wikipedia and returns the first paragraph if it exists. If not, it will return some similar entities to search.
@@ -83,18 +84,18 @@ if __name__ == "__main__":
         env = env.init_env(batch_size=1)
         
         # Load the prompt file for fewshot prompting
-        prompt_file = './prompts/alfworld_3prompts.json'
+        prompt_file = './prompts/alfworld.json'
         with open(prompt_file, 'r') as file:
             prompt_examples = json.load(file)
 
         # Evaluate
-        eval_alfworld(env=env, prompt_examples=prompt_examples, client=client)
+        eval_alfworld(env=env, prompt_examples=prompt_examples, client=client, prompt_style=args.prompt_style.lower())
         
     elif args.data_set == 'WebShop':
         # Load the prompt
         prompt_file = './prompts/webshop.json'
         with open(prompt_file, 'r') as file:
-            prompt = json.load(file)['prompt1']
+            prompt = json.load(file)[args.prompt_style.lower()]
 
         # Create WebShop enviornment
         env = webshopEnv()
