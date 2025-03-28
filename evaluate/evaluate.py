@@ -1,61 +1,112 @@
 import time
 from utils.const import prefixes
-from react import webthink, alfworld_run
+from react import webthink, alfworld_run, webshop_run
 
+def print_separator(symbol='=', length=100):
+    print(symbol * length)
+
+# -------------------------------------------------------------------------
 # Evaluation script for FEVER and HotpotQA datasets
+# -------------------------------------------------------------------------
+
 def eval_qa(indexes = None, prompt = '', to_print=False, env=None, client=None):
     answers = []
     infos = []
-    old_time = time.time()
+    start_time = time.time()
+    
+    print_separator()
+    print(f"🚀 Starting QA Evaluation - {len(indexes[:500])} questions")
+    print_separator()
 
-    # Loop over firts 500 questions
-    for i in indexes[:500]:
+    for idx, i in enumerate(indexes[:500], 1):
         _, info = webthink(index=i, prompt=prompt, to_print=True, env=env, client=client)
         answers.append(info['em'])
         infos.append(info)
-        print(      
-            f"Correct answers: {sum(answers)}, "
-            f"Total questions: {len(answers)}, "
-            f"Accuracy: {(sum(answers) / len(answers)) * 100}%, "
-            f"Time: {(time.time() - old_time) / len(answers)}"
-        )
-        print('-------------------------------------------------------------------------------------------------\n')
-
+        
+        elapsed = time.time() - start_time
+        print(f"\n📊 Question {idx:03d}/{len(indexes[:500]):03d}")
+        print(f"   Exact Match: {'✅' if info['em'] else '❌'}")
+        print(f"   Cumulative: {sum(answers)}/{len(answers)}")
+        print(f"   Accuracy: {sum(answers)/len(answers)*100:.2f}%")
+        print(f"   Avg Time: {elapsed/len(answers):.2f}s")
+        print_separator('-', 50)
+# -------------------------------------------------------------------------
 # Evaluation script for ALFWorld dataset
-def eval_alfworld(env=None, prompt_examples='', client=None):
+# -------------------------------------------------------------------------
 
-    # Success counters: rs[task_type] = successes, cnts[task_type] = attempts
-    cnts = [0] * 6
-    rs = [0] * 6
+def eval_alfworld(env=None, prompt_examples='', client=None):
+    tasks = [0] * 6
+    completed = [0] * 6
+
+    print_separator()
+    print("🏠 Starting ALFWorld Evaluation - 134 tasks")
+    print_separator()
 
     for task_num in range(134):
-        # Reset environment for new task
         ob, info = env.reset()
-        ob = '\n'.join(ob[0].split('\n\n')[1:])  # Clean observation
-        
-        # Extract task type from path (e.g., 'pick_and_place/living_room')
+        ob = '\n'.join(ob[0].split('\n\n')[1:])
         name = '/'.join(info['extra.gamefile'][0].split('/')[-3:-1])
-        print(f"\n[Task {task_num+1}/134]")
-        print(f"Task ID: {name}")
         
-        # Match task to type and select prompt
+        print(f"\n🔧 Task {task_num+1:03d}/134")
+        print(f"   Type: {name}")
+        print_separator('-', 50)
+
         for i, (k, v) in enumerate(prefixes.items()):
             if name.startswith(k):
-                # Construct prompt with few-shot examples
                 prompt = 'Interact with a household to solve a task. The game will end on its own when you complete the task. Here are two examples.\n' + prompt_examples[f'react_{v}_1'] + '\nHere is the task.\n'
-                # Run task with ReAct
                 r = alfworld_run(prompt, ob=ob, client=client, env=env)
                 
-                # Update success counters
-                rs[i] += r
-                cnts[i] += 1
+                completed[i] += r
+                tasks[i] += 1
                 break
+
+        success_rate = sum(completed)/sum(tasks) if sum(tasks) > 0 else 0
+        print("\n📈 Progress Update")
+        print(f"   Completed: {task_num+1}/134")
+        print(f"   Success Rate: {success_rate:.2%}")
+        print("\n🔍 Task Breakdown:")
+        for (task_name), attempts, successes in zip(prefixes.keys(), tasks, completed):
+            if attempts > 0:
+                print(f"   {task_name:<20}: {successes}/{attempts} ({successes/attempts:.2%})")
+        print_separator()
+
+# -------------------------------------------------------------------------
+# Evaluation script for WebShop dataset
+# -------------------------------------------------------------------------
+
+def eval_webshop(env=None, prompt='', n=50, client=None):
+    completed = []
+    tasks = 0
+    
+    print_separator()
+    print(f"🛍️  Starting WebShop Evaluation - {n} trials")
+    print_separator()
+
+    for i in range(n):
+        print(f"\n🔄 Trial {i+1:02d}/{n}")
+        try:
+            r = webshop_run(f'fixed_{i}', prompt, to_print=True, env=env, client=client)
+        except AssertionError:
+            r = 0
+            tasks += 1
+        completed.append(r)
         
-        # Progress update
-        success_rate = sum(rs) / sum(cnts) if sum(cnts) > 0 else 0
-        print(f"\n[Progress]")
-        print(f"Completed: {task_num+1}/134")
-        print(f"Current Success Rate: {success_rate:.2%}")
-        print(f"Per-Task Counts: {dict(zip(prefixes.keys(), cnts))}")
-        print(f"Per-Task Successes: {dict(zip(prefixes.keys(), rs))}")
-        print('-'*40)
+        if (i+1) % 5 == 0 or i == n-1:
+            success_count = sum(completed)
+            avg_reward = sum(completed)/len(completed)
+            success_rate = success_count/len(completed)
+            failure_rate = tasks/len(completed)
+            
+            print("\n📊 Interim Results")
+            print(f"   Trials Completed: {i+1:02d}/{n}")
+            print(f"   Average Reward:   {avg_reward:.2f}")
+            print(f"   Success Rate:     {success_rate:.2%}")
+            print(f"   Failure Rate:     {failure_rate:.2%}")
+            print_separator('-', 40)
+
+    print("\n🎯 Final Results")
+    print(f"   Total Trials:      {n}")
+    print(f"   Average Reward:    {sum(completed)/n:.2f}")
+    print(f"   Total Successes:   {sum(completed)}/{n} ({sum(completed)/n:.2%})")
+    print(f"   Total Failures:    {tasks}/{n} ({tasks/n:.2%})")
+    print_separator()

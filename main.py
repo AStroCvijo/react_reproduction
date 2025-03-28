@@ -1,22 +1,18 @@
 import os
-import sys
 import json
 import yaml
-import time
 import random
 import getpass
-import numpy as np
 from react import llm
 from openai import OpenAI
 from wikienv import WikiEnv
-from react import run_episodes
 from utils.argparser import arg_parse
 from wrappers.webshop_wrapper import webshopEnv
 from wrappers.fever_wrapper import FeverWrapper
 from wrappers.logging_wrapper import LoggingWrapper
-from evaluate.evaluate import eval_qa, eval_alfworld
 from wrappers.hotpotqa_wrapper import HotPotQAWrapper
 from alfworld.agents.environment import get_environment
+from evaluate.evaluate import eval_qa, eval_alfworld, eval_webshop
 
 if __name__ == "__main__":
     os.environ["ALFWORLD_DATA"] = "/home/cvijo/.cache/alfworld"
@@ -100,8 +96,8 @@ if __name__ == "__main__":
         with open(prompt_file, 'r') as file:
             prompt = json.load(file)['prompt1']
 
+        # Create WebShop enviornment
         env = webshopEnv()
-        results = run_episodes(prompt, 500, env=env)
-        print(results)
 
-        
+        # Evaluate
+        eval_webshop(env=env, prompt=prompt, n=50, client=client)

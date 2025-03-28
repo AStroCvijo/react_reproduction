@@ -1,8 +1,8 @@
-from utils.const import ACTION_TO_TEMPLATE
 import requests
 from bs4 import BeautifulSoup
 from bs4.element import Comment
 from utils.const import WEBSHOP_URL
+from utils.const import ACTION_TO_TEMPLATE
 
 def clean_str(p):
   return p.encode().decode("unicode-escape").encode("latin1").decode("utf-8")
