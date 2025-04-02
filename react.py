@@ -47,7 +47,7 @@ def webthink(index=None, prompt='', to_print=True, env = None, client=None):
     n_calls, n_badcalls = 0, 0
     
     # ReAct loop - maximum 20 reasoning steps
-    for i in range(1, 20):
+    for i in range(1, 8):
         n_calls += 1
         # Generate thought and action using LLM
         thought_action = llm(prompt + f"Thought {i}:", stop=[f"\nObservation {i}:"], client=client)
