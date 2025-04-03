@@ -38,12 +38,11 @@ if __name__ == "__main__":
         with open(prompt_file, 'r') as file:
             prompt = json.load(file)[args.prompt_style.lower()]
 
-        instruction ="""Determine if there is Observation that SUPPORTS or REFUTES a Claim, or if there is NOT ENOUGH INFORMATION with interleaving, Action, Observation steps. Action can be three types: 
-        (1) Search[entity], which searches the exact entity on Wikipedia and returns the first paragraph if it exists. If not, it will return some similar entities to search.
-        (2) Lookup[keyword], which returns the next sentence containing keyword in the current passage.
-        (3) Finish[answer], which returns the answer and finishes the task.
-        Here are some examples.
-        """
+        # Load the instruction
+        instruction_file = './prompts/instructions/fever_instruct.json'
+        with open(prompt_file, 'r') as file:
+            instruction = json.load(file)[args.prompt_style.lower()]
+
         prompt = instruction + prompt
 
         # Random shuffle - With seed for reproducability
@@ -64,12 +63,11 @@ if __name__ == "__main__":
         with open(prompt_file, 'r') as file:
             prompt = json.load(file)[args.prompt_style.lower()]
         
-        instruction = """Answer the question with interleaving, Action, Observation steps. Action can be three types: 
-        (1) Search[entity], which searches the exact entity on Wikipedia and returns the first paragraph if it exists. If not, it will return some similar entities to search.
-        (2) Lookup[keyword], which returns the next sentence containing keyword in the current passage.
-        (3) Finish[answer], which returns the answer and finishes the task.
-        Here are some examples.
-        """
+        # Load the instruction
+        instruction_file = './prompts/instructions/hotpotqa_instruct.json'
+        with open(prompt_file, 'r') as file:
+            instruction = json.load(file)[args.prompt_style.lower()]
+
         prompt = instruction + prompt
 
         # Random shuffle - With seed for reproducability

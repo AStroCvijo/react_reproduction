@@ -1,0 +1,6 @@
+{
+    "act": "Determine if there is Observation that SUPPORTS or REFUTES a Claim, or if there is NOT ENOUGH INFORMATION with interleaving Action and Observation steps, where Action can be: (1) Search[entity] to find the first Wikipedia paragraph or similar entities, (2) Lookup[keyword] to get the next sentence with the keyword in the current passage, or (3) Finish[answer] to return the answer and end the task. Examples:\n",
+    "cot": "Determine if there is Observation that SUPPORTS or REFUTES a Claim, or if there is NOT ENOUGH INFORMATION with interleaving Action and Observation steps. Examples:\n",
+    "standard": "Determine if there is Observation that SUPPORTS or REFUTES a Claim, or if there is NOT ENOUGH INFORMATION. Examples:\n",
+    "react": "Determine if there is Observation that SUPPORTS or REFUTES a Claim, or if there is NOT ENOUGH INFORMATION with interleaving Thought and Action steps, where Thought reasons about the situation and Action can be: (1) Search[entity] to find the first Wikipedia paragraph or similar entities, (2) Lookup[keyword] to get the next sentence with the keyword in the current passage, or (3) Finish[answer] to return the answer and end the task. Examples:\n"
+}
