@@ -4,8 +4,8 @@ import yaml
 import random
 import getpass
 from openai import OpenAI
-from wikienv import WikiEnv
 from utils.argparser import arg_parse
+from wrappers.wiki_wrapper import WikiEnv
 from wrappers.webshop_wrapper import webshopEnv
 from wrappers.fever_wrapper import FeverWrapper
 from wrappers.logging_wrapper import LoggingWrapper
@@ -115,7 +115,7 @@ if __name__ == "__main__":
 
     elif args.data_set == "ALFWorld":
         # Load ALFWorld configuration
-        with open("base_config.yaml") as reader:
+        with open("config/ALFWorld_config.yaml") as reader:
             config = yaml.safe_load(reader)
 
         # Split for ALFWorld

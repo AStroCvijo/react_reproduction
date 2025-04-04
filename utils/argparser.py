@@ -20,7 +20,7 @@ def arg_parse():
         choices=["ReAct", "Act", "CoT", "Standard", "CoT-SC"],
         default="ReAct",
     )
-    parser.add_argument("-ns", "--num_samples", type=int, default=0)
+    parser.add_argument("-ns", "--num_samples", type=int, default=1)
     parser.add_argument("-t", "--tempreture", type=float, default=0.0)
 
     # Parse the arguments

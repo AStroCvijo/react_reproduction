@@ -45,6 +45,7 @@ def webthink(
     all_answers = []
     n_calls, n_badcalls = 0, 0
 
+    print(num_samples)
     for sample_idx in range(num_samples):
         # Reset prompt for each trajectory
         sample_prompt = prompt
@@ -93,13 +94,16 @@ def webthink(
         all_answers.append(info.get("answer", "").strip())
 
     # Perform majority voting and get the most common answer
-    answer_counts = Counter(all_answers)
-    majority_answer = answer_counts.most_common(1)[0][0]
+    if num_samples > 1:
+        answer_counts = Counter(all_answers)
+        final_answer = answer_counts.most_common(1)[0][0]
+    else:
+        final_answer = all_answers
 
     # Update `info` with self-consistent answer and additional details
     info.update(
         {
-            "answer": majority_answer,  # Use majority-voted answer
+            "answer": final_answer,  # Use majority-voted answer
             "n_calls": n_calls,  # Total LLM API calls
             "n_badcalls": n_badcalls,  # Number of malformed responses
             "trajectories": all_answers,  # Store all sampled answers
@@ -107,7 +111,7 @@ def webthink(
     )
 
     if to_print:
-        print("\nFinal Answer (Majority Vote):", majority_answer)
+        print("\nFinal Answer (Majority Vote):", final_answer)
 
     return r, info
 
