@@ -26,21 +26,21 @@ if __name__ == "__main__":
 
     # Parse the arguments
     args = arg_parse()
-    
-    if args.data_set == 'FEVER':
+
+    if args.data_set == "FEVER":
         # Wrappers
         wiki_env = WikiEnv()
-        fever_env = FeverWrapper(wiki_env, split='dev')
+        fever_env = FeverWrapper(wiki_env, split="dev")
         env = LoggingWrapper(fever_env)
 
         # Load the prompt
-        prompt_file = './prompts/fever.json'
-        with open(prompt_file, 'r') as file:
+        prompt_file = "./prompts/fever.json"
+        with open(prompt_file, "r") as file:
             prompt = json.load(file)[args.prompt_style.lower()]
 
         # Load the instruction
-        instruction_file = './prompts/instructions/fever_instruct.json'
-        with open(prompt_file, 'r') as file:
+        instruction_file = "./prompts/instructions/fever_instruct.json"
+        with open(prompt_file, "r") as file:
             instruction = json.load(file)[args.prompt_style.lower()]
 
         prompt = instruction + prompt
@@ -50,22 +50,41 @@ if __name__ == "__main__":
         random.Random(233).shuffle(indexes)
 
         # Evaluate on the FEVER dataset
-        eval_qa(indexes=indexes, prompt=prompt, to_print=True, env=env, client=client)
+        if args.prompt_style.lower() == "cot-sc":
+            eval_qa(
+                indexes=indexes,
+                prompt=prompt,
+                to_print=True,
+                env=env,
+                client=client,
+                num_samples=21,
+                tempreture=0.7,
+            )
+        else:
+            eval_qa(
+                indexes=indexes,
+                prompt=prompt,
+                to_print=True,
+                env=env,
+                client=client,
+                num_samples=args.num_samples,
+                tempreture=args.tempreture,
+            )
 
-    elif args.data_set == 'HotpotQA':
+    elif args.data_set == "HotpotQA":
         # Wrappers
         wiki_env = WikiEnv()
-        hotpotqa_env = HotPotQAWrapper(wiki_env, split='dev')
+        hotpotqa_env = HotPotQAWrapper(wiki_env, split="dev")
         env = LoggingWrapper(hotpotqa_env)
 
         # Load the prompt
-        prompt_file='./prompts/hotpotqa.json'
-        with open(prompt_file, 'r') as file:
+        prompt_file = "./prompts/hotpotqa.json"
+        with open(prompt_file, "r") as file:
             prompt = json.load(file)[args.prompt_style.lower()]
-        
+
         # Load the instruction
-        instruction_file = './prompts/instructions/hotpotqa_instruct.json'
-        with open(prompt_file, 'r') as file:
+        instruction_file = "./prompts/instructions/hotpotqa_instruct.json"
+        with open(prompt_file, "r") as file:
             instruction = json.load(file)[args.prompt_style.lower()]
 
         prompt = instruction + prompt
@@ -74,33 +93,57 @@ if __name__ == "__main__":
         indexes = list(range(7405))
         random.Random(233).shuffle(indexes)
 
-        # Evaluate
-        eval_qa(indexes=indexes, prompt=prompt, to_print=True, env=env, client=client)
+        # Evaluate on the HotpotQA dataset
+        if args.prompt_style.lower() == "cot-sc":
+            eval_qa(
+                indexes=indexes,
+                prompt=prompt,
+                to_print=True,
+                env=env,
+                client=client,
+                num_samples=21,
+                tempreture=0.7,
+            )
+        else:
+            eval_qa(
+                indexes=indexes,
+                prompt=prompt,
+                to_print=True,
+                env=env,
+                client=client,
+                num_samples=args.num_samples,
+                tempreture=args.tempreture,
+            )
 
-    elif args.data_set == 'ALFWorld':
+    elif args.data_set == "ALFWorld":
         # Load ALFWorld configuration
-        with open('base_config.yaml') as reader:
+        with open("base_config.yaml") as reader:
             config = yaml.safe_load(reader)
-        
+
         # Split for ALFWorld
         split = "eval_out_of_distribution"
 
         # Create ALFWorld enviornment
         env = get_environment(config["env"]["type"])(config, train_eval=split)
         env = env.init_env(batch_size=1)
-        
+
         # Load the prompt file for fewshot prompting
-        prompt_file = './prompts/alfworld.json'
-        with open(prompt_file, 'r') as file:
+        prompt_file = "./prompts/alfworld.json"
+        with open(prompt_file, "r") as file:
             prompt_examples = json.load(file)
 
         # Evaluate
-        eval_alfworld(env=env, prompt_examples=prompt_examples, client=client, prompt_style=args.prompt_style.lower())
-        
-    elif args.data_set == 'WebShop':
+        eval_alfworld(
+            env=env,
+            prompt_examples=prompt_examples,
+            client=client,
+            prompt_style=args.prompt_style.lower(),
+        )
+
+    elif args.data_set == "WebShop":
         # Load the prompt
-        prompt_file = './prompts/webshop.json'
-        with open(prompt_file, 'r') as file:
+        prompt_file = "./prompts/webshop.json"
+        with open(prompt_file, "r") as file:
             prompt = json.load(file)[args.prompt_style.lower()]
 
         # Create WebShop enviornment

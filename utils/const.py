@@ -16,19 +16,19 @@ FEVER_SPLIT_FILE = {
 
 # ALFWorld constants
 prefixes = {
-    'pick_and_place': 'put',
-    'pick_clean_then_place': 'clean',
-    'pick_heat_then_place': 'heat',
-    'pick_cool_then_place': 'cool',
-    'look_at_obj': 'examine',
-    'pick_two_obj': 'puttwo'
+    "pick_and_place": "put",
+    "pick_clean_then_place": "clean",
+    "pick_heat_then_place": "heat",
+    "pick_cool_then_place": "cool",
+    "look_at_obj": "examine",
+    "pick_two_obj": "puttwo",
 }
 
 # WebShop constants
 WEBSHOP_URL = "http://3.83.245.205:3000"
 ACTION_TO_TEMPLATE = {
-    'Description': 'description_page.html',
-    'Features': 'features_page.html',
-    'Reviews': 'review_page.html',
-    'Attributes': 'attributes_page.html',
+    "Description": "description_page.html",
+    "Features": "features_page.html",
+    "Reviews": "review_page.html",
+    "Attributes": "attributes_page.html",
 }
