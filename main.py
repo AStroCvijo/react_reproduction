@@ -11,7 +11,7 @@ from wrappers.fever_wrapper import FeverWrapper
 from wrappers.logging_wrapper import LoggingWrapper
 from wrappers.hotpotqa_wrapper import HotPotQAWrapper
 from alfworld.agents.environment import get_environment
-from evaluate.evaluate import eval_qa, eval_alfworld, eval_webshop
+from evaluate.evaluate import eval_qa, eval_alfworld, eval_webshop, eval_qa_cot_sc_react, eval_qa_react_cot_sc
 
 if __name__ == "__main__":
 
@@ -31,34 +31,82 @@ if __name__ == "__main__":
         fever_env = FeverWrapper(wiki_env, split="dev")
         env = LoggingWrapper(fever_env)
 
-        # Load the prompt
-        prompt_file = "./prompts/fever.json"
-        with open(prompt_file, "r") as file:
-            prompt = json.load(file)[args.prompt_style.lower()]
-
-        # Load the instruction
-        instruction_file = "./prompts/instructions/fever_instruct.json"
-        with open(prompt_file, "r") as file:
-            instruction = json.load(file)[args.prompt_style.lower()]
-
-        prompt = instruction + prompt
-
         # Random shuffle - With seed for reproducability
         indexes = list(range(7405))
         random.Random(233).shuffle(indexes)
 
         # Evaluate on the FEVER dataset
-        if args.prompt_style.lower() == "cot-sc":
-            eval_qa(
+        if args.prompt_style == "CoT-SC-ReAct":
+            # Load the prompt
+            prompt_file = "./prompts/fever.json"
+            with open(prompt_file, "r") as file:
+                prompt_data = json.load(file)
+                cot_prompt = prompt_data['cot']
+                react_prompt = prompt_data['react']
+
+            # Load the instruction
+            instruction_file = "./prompts/instructions/fever_instruct.json"
+            with open(instruction_file, "r") as file:
+                prompt_data = json.load(file)
+                cot_instruction = prompt_data['cot']
+                react_instruction = prompt_data['react']
+
+            cot_prompt = cot_instruction + cot_prompt
+            react_prompt = react_instruction + react_prompt
+
+            eval_qa_cot_sc_react(
                 indexes=indexes,
-                prompt=prompt,
+                cot_prompt=cot_prompt,
+                react_prompt=react_prompt,
+                to_print=True,
+                env=env,
+                client=client,
+                num_samples=5,
+                tempreture=0.7,
+            )
+
+        elif args.prompt_style == "ReAct-CoT-SC":
+            # Load the prompt
+            prompt_file = "./prompts/fever.json"
+            with open(prompt_file, "r") as file:
+                prompt_data = json.load(file)
+                cot_prompt = prompt_data['cot']
+                react_prompt = prompt_data['react']
+
+            # Load the instruction
+            instruction_file = "./prompts/instructions/fever_instruct.json"
+            with open(instruction_file, "r") as file:
+                prompt_data = json.load(file)
+                cot_instruction = prompt_data['cot']
+                react_instruction = prompt_data['react']
+
+            cot_prompt = cot_instruction + cot_prompt
+            react_prompt = react_instruction + react_prompt
+
+            eval_qa_react_cot_sc(
+                indexes=indexes,
+                cot_prompt=cot_prompt,
+                react_prompt=react_prompt,
                 to_print=True,
                 env=env,
                 client=client,
                 num_samples=21,
                 tempreture=0.7,
+                react_max_steps=5
             )
         else:
+            # Load the prompt
+            prompt_file = "./prompts/fever.json"
+            with open(prompt_file, "r") as file:
+                prompt = json.load(file)[args.prompt_style.lower()]
+
+            # Load the instruction
+            instruction_file = "./prompts/instructions/fever_instruct.json"
+            with open(instruction_file, "r") as file:
+                instruction = json.load(file)[args.prompt_style.lower()]
+
+            prompt = instruction + prompt
+
             eval_qa(
                 indexes=indexes,
                 prompt=prompt,

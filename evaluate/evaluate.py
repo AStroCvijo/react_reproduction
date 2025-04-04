@@ -1,6 +1,6 @@
 import time
 from utils.const import prefixes
-from react import webthink, alfworld_run, webshop_run
+from react import webthink, alfworld_run, webshop_run, webthink_cot_sc_react, webthink_react_cot_sc
 
 
 def print_separator(symbol="=", length=100):
@@ -50,6 +50,87 @@ def eval_qa(
         print(f"   Avg Time: {elapsed/len(answers):.2f}s")
         print_separator("-", 50)
 
+def eval_qa_cot_sc_react(
+    indexes=None,
+    cot_prompt="",
+    react_prompt="",
+    to_print=False,
+    env=None,
+    client=None,
+    num_samples=1,
+    tempreture=0.0,
+):
+    answers = []
+    infos = []
+    start_time = time.time()
+
+    print_separator()
+    print(f"🚀 Starting QA Evaluation - {len(indexes[:500])} questions")
+    print_separator()
+
+    for idx, i in enumerate(indexes[:500], 1):
+        _, info = webthink_cot_sc_react(
+            index=i,
+            cot_prompt=cot_prompt,
+            react_prompt=react_prompt,
+            to_print=True,
+            env=env,
+            client=client,
+            num_samples=num_samples,
+            temperature=tempreture,
+        )
+        answers.append(info["em"])
+        infos.append(info)
+
+        elapsed = time.time() - start_time
+        print(f"\n📊 Question {idx:03d}/{len(indexes[:500]):03d}")
+        print(f"   Exact Match: {'✅' if info['em'] else '❌'}")
+        print(f"   Cumulative: {sum(answers)}/{len(answers)}")
+        print(f"   Accuracy: {sum(answers)/len(answers)*100:.2f}%")
+        print(f"   Avg Time: {elapsed/len(answers):.2f}s")
+        print_separator("-", 50)
+
+def eval_qa_react_cot_sc(
+    indexes=None,
+    cot_prompt="",
+    react_prompt="",
+    to_print=False,
+    env=None,
+    client=None,
+    num_samples=1,
+    tempreture=0.0,
+    react_max_steps=1
+):
+    answers = []
+    infos = []
+    start_time = time.time()
+
+    print_separator()
+    print(f"🚀 Starting QA Evaluation - {len(indexes[:500])} questions")
+    print_separator()
+
+    for idx, i in enumerate(indexes[:500], 1):
+        _, info = webthink_react_cot_sc(
+            index=i,
+            cot_prompt=cot_prompt,
+            react_prompt=react_prompt,
+            to_print=True,
+            env=env,
+            client=client,
+            num_samples=num_samples,
+            temperature=tempreture,
+            react_max_steps=react_max_steps
+        )
+        answers.append(info["em"])
+        infos.append(info)
+
+        elapsed = time.time() - start_time
+        print(f"\n📊 Question {idx:03d}/{len(indexes[:500]):03d}")
+        print(f"   Exact Match: {'✅' if info['em'] else '❌'}")
+        print(f"   Cumulative: {sum(answers)}/{len(answers)}")
+        print(f"   Accuracy: {sum(answers)/len(answers)*100:.2f}%")
+        print(f"   Avg Time: {elapsed/len(answers):.2f}s")
+        print_separator("-", 50)
 
 # -------------------------------------------------------------------------
 # Evaluation script for ALFWorld dataset
