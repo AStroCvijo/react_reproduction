@@ -3,7 +3,6 @@ import json
 import yaml
 import random
 import getpass
-from react import llm
 from openai import OpenAI
 from wikienv import WikiEnv
 from utils.argparser import arg_parse
@@ -15,7 +14,6 @@ from alfworld.agents.environment import get_environment
 from evaluate.evaluate import eval_qa, eval_alfworld, eval_webshop
 
 if __name__ == "__main__":
-    os.environ["ALFWORLD_DATA"] = "/home/cvijo/.cache/alfworld"
 
     # Get the OpenAI API key
     if not os.environ.get("OPENAI_API_KEY"):
