@@ -17,7 +17,7 @@ def arg_parse():
         "-ps",
         "--prompt_style",
         type=str,
-        choices=["ReAct", "Act", "CoT", "Standard", "CoT-SC", "CoT-SC-ReAct", "ReAct-CoT-SC"],
+        choices=["ReAct", "Act", "CoT", "Standard", "CoT-SC-ReAct", "ReAct-CoT-SC"],
         default="ReAct",
     )
     parser.add_argument("-ns", "--num_samples", type=int, default=1)

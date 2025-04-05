@@ -285,12 +285,12 @@ def webthink_cot_sc_react(
 
     # Check if we need to fall back to ReAct
     answer_counts = Counter(all_answers)
-    
+
     most_common = answer_counts.most_common(1)
     if most_common:
         most_common_answer, most_common_count = most_common[0]
         threshold = num_samples * react_threshold_ratio
-    
+
     if most_common_count >= threshold:
         # Confident answer from CoT-SC
         final_answer = most_common_answer
@@ -299,12 +299,12 @@ def webthink_cot_sc_react(
         # Fall back to ReAct
         if to_print:
             print("\nCoT-SC not confident, falling back to ReAct...")
-        
+
         # Reset environment for ReAct
         env.reset(index=index)
         sample_prompt = react_prompt + question + "\n"
         done = False
-        
+
         # ReAct-style reasoning loop
         for i in range(1, 8):
             n_calls += 1
@@ -356,7 +356,9 @@ def webthink_cot_sc_react(
             "n_badcalls": n_badcalls,
             "trajectories": all_answers,
             "method_used": method_used,
-            "cot_sc_confidence": most_common_count/num_samples if num_samples > 0 else 0,
+            "cot_sc_confidence": (
+                most_common_count / num_samples if num_samples > 0 else 0
+            ),
         }
     )
 
@@ -364,6 +366,7 @@ def webthink_cot_sc_react(
         print(f"\nFinal Answer ({method_used}):", final_answer)
 
     return r, info
+
 
 # -------------------------------------------------------------------------
 # ReAct -> CoT-SC reasoning for fact verification
@@ -393,9 +396,9 @@ def webthink_react_cot_sc(
     n_calls, n_badcalls = 0, 0
     final_answer = ""
     method_used = ""
-    
+
     # ReAct-style reasoning loop
-    for i in range(1, react_max_steps+1):
+    for i in range(1, react_max_steps + 1):
         n_calls += 1
         thought_action = llm(
             react_prompt + f"Thought {i}:",
@@ -422,7 +425,9 @@ def webthink_react_cot_sc(
         obs = obs.replace("\\n", "")
 
         # Append step to prompt
-        step_str = f"Thought {i}: {thought}\nAction {i}: {action}\nObservation {i}: {obs}\n"
+        step_str = (
+            f"Thought {i}: {thought}\nAction {i}: {action}\nObservation {i}: {obs}\n"
+        )
         react_prompt += step_str
 
         if to_print:
@@ -440,61 +445,61 @@ def webthink_react_cot_sc(
 
         all_answers = []
         for sample_idx in range(num_samples):
-                # Reset the environment
-                question = env.reset(index=index)
+            # Reset the environment
+            question = env.reset(index=index)
 
-                # Reset prompt for each trajectory
-                sample_prompt = cot_prompt
+            # Reset prompt for each trajectory
+            sample_prompt = cot_prompt
 
-                # ReAct-style reasoning loop
-                for i in range(1, 8):
-                    n_calls += 1
-                    thought_action = llm(
-                        sample_prompt + f"Thought {i}:",
-                        stop=[f"\nObservation {i}:"],
-                        client=client,
-                        temperature=temperature,
-                    )
+            # ReAct-style reasoning loop
+            for i in range(1, 8):
+                n_calls += 1
+                thought_action = llm(
+                    sample_prompt + f"Thought {i}:",
+                    stop=[f"\nObservation {i}:"],
+                    client=client,
+                    temperature=temperature,
+                )
 
-                    try:
-                        thought, action = thought_action.strip().split(f"\nAction {i}: ")
-                    except ValueError:
-                        if to_print:
-                            print("Malformed response:", thought_action)
-                        n_badcalls += 1
-                        n_calls += 1
-                        thought = thought_action.strip().split("\n")[0]
-                        action = llm(
-                            sample_prompt + f"Thought {i}: {thought}\nAction {i}:",
-                            stop=[f"\n"],
-                            client=client,
-                        ).strip()
-
-                    obs, r, done, info = step(env, action[0].lower() + action[1:])
-                    obs = obs.replace("\\n", "")
-
-                    # Append step to prompt
-                    step_str = f"Thought {i}: {thought}\nAction {i}: {action}\nObservation {i}: {obs}\n"
-                    sample_prompt += step_str
-
+                try:
+                    thought, action = thought_action.strip().split(f"\nAction {i}: ")
+                except ValueError:
                     if to_print:
-                        print(step_str)
+                        print("Malformed response:", thought_action)
+                    n_badcalls += 1
+                    n_calls += 1
+                    thought = thought_action.strip().split("\n")[0]
+                    action = llm(
+                        sample_prompt + f"Thought {i}: {thought}\nAction {i}:",
+                        stop=[f"\n"],
+                        client=client,
+                    ).strip()
 
-                    if done:
-                        break
+                obs, r, done, info = step(env, action[0].lower() + action[1:])
+                obs = obs.replace("\\n", "")
 
-                # Ensure we complete the process
-                if not done:
-                    obs, r, done, info = step(env, "finish[]")
+                # Append step to prompt
+                step_str = f"Thought {i}: {thought}\nAction {i}: {action}\nObservation {i}: {obs}\n"
+                sample_prompt += step_str
 
-                all_answers.append(info.get("answer", "").strip())
+                if to_print:
+                    print(step_str)
+
+                if done:
+                    break
+
+            # Ensure we complete the process
+            if not done:
+                obs, r, done, info = step(env, "finish[]")
+
+            all_answers.append(info.get("answer", "").strip())
 
         answer_counts = Counter(all_answers)
-        
+
         most_common = answer_counts.most_common(1)
         if most_common:
             most_common_answer, _ = most_common[0]
-        
+
         # Confident answer from CoT-SC
         final_answer = most_common_answer
         method_used = "CoT-SC"

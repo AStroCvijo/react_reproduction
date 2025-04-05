@@ -1,6 +1,12 @@
 import time
 from utils.const import prefixes
-from react import webthink, alfworld_run, webshop_run, webthink_cot_sc_react, webthink_react_cot_sc
+from react import (
+    webthink,
+    alfworld_run,
+    webshop_run,
+    webthink_cot_sc_react,
+    webthink_react_cot_sc,
+)
 
 
 def print_separator(symbol="=", length=100):
@@ -50,6 +56,7 @@ def eval_qa(
         print(f"   Avg Time: {elapsed/len(answers):.2f}s")
         print_separator("-", 50)
 
+
 def eval_qa_cot_sc_react(
     indexes=None,
     cot_prompt="",
@@ -90,6 +97,7 @@ def eval_qa_cot_sc_react(
         print(f"   Avg Time: {elapsed/len(answers):.2f}s")
         print_separator("-", 50)
 
+
 def eval_qa_react_cot_sc(
     indexes=None,
     cot_prompt="",
@@ -99,7 +107,7 @@ def eval_qa_react_cot_sc(
     client=None,
     num_samples=1,
     tempreture=0.0,
-    react_max_steps=1
+    react_max_steps=1,
 ):
     answers = []
     infos = []
@@ -119,7 +127,7 @@ def eval_qa_react_cot_sc(
             client=client,
             num_samples=num_samples,
             temperature=tempreture,
-            react_max_steps=react_max_steps
+            react_max_steps=react_max_steps,
         )
         answers.append(info["em"])
         infos.append(info)
@@ -131,6 +139,7 @@ def eval_qa_react_cot_sc(
         print(f"   Accuracy: {sum(answers)/len(answers)*100:.2f}%")
         print(f"   Avg Time: {elapsed/len(answers):.2f}s")
         print_separator("-", 50)
+
 
 # -------------------------------------------------------------------------
 # Evaluation script for ALFWorld dataset

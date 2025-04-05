@@ -1,0 +1,1 @@
+python main.py --data_set HotpotQA --prompt_style CoT --num_samples 21

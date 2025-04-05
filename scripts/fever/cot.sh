@@ -1,0 +1,1 @@
+python main.py --data_set FEVER --prompt_style CoT
