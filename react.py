@@ -113,7 +113,7 @@ def webthink(
     )
 
     if to_print:
-        print("\nFinal Answer (Majority Vote):", final_answer)
+        print("\nFinal Answer:", final_answer)
 
     return r, info
 
