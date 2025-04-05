@@ -1,5 +1,5 @@
 # ReAct reproduction
-Reproduction of ICLR 2023 paper ["ReAct: Synergizing Reasoning and Aacting in Language Models"](https://arxiv.org/pdf/2210.03629).
+Reproduction of ICLR 2023 paper ["ReAct: Synergizing Reasoning and Acting in Language Models"](https://arxiv.org/pdf/2210.03629).
 Developed as part of an application for EEML 2025, Sarajevo, Bosnia and Herzegovina.
 
 ## ⚡**Quickstart**
