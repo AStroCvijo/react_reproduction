@@ -70,3 +70,9 @@ pip install -r requirements.txt
 | -ps, --prompt_style | Prompt style to use                                 | ReAct      | ReAct, Act, CoT, Standard, CoT-SC-ReAct, ReAct-CoT-SC                |
 | -ns, --num_samples | Number of samples to generate                       | 1          | Any positive integer                                                 |
 | -t, --tempreture  | Temperature setting for response variability        | 0.0        | Any float value (0.0 to 1.0)                                         |
+
+## 📄**Experiments**
+
+For detailed experiments and evaluations, please refer to the following document:
+
+[Experiments and Evaluations](https://astrocvijo.github.io/react_reproduction/react_reproduction.pdf)
